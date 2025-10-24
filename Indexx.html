@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema de Gestión de Productos</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css" />
+  
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="app-title">
+        <i class="fas fa-store"></i>
+        <h1>Sistema de Gestión de Productos</h1>
+      </div>
+      <div class="controls">
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search" placeholder="Buscar productos...">
+        </div>
+        <select id="sort">
+          <option value="new">Más recientes</option>
+          <option value="name">Nombre A-Z</option>
+          <option value="price-asc">Precio: menor a mayor</option>
+          <option value="price-desc">Precio: mayor a menor</option>
+          <option value="stock">Stock disponible</option>
+        </select>
+        <button id="exportBtn" class="btn-primary">
+          <i class="fas fa-file-export"></i> Exportar
+        </button>
+        <button id="refreshBtn" class="btn-secondary">
+          <i class="fas fa-sync-alt"></i> Actualizar
+        </button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Lista de Productos</h2>
+            <span class="badge badge-primary" id="totalBadge">0 productos</span>
+          </div>
+          <div class="table-container">
+            <table id="productsTable">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-right">Precio</th>
+                  <th class="text-center">Stock</th>
+                  <th>Categoría</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="productsBody">
+                <!-- Dynamic content -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty" class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>No hay productos registrados</p>
+            <p>Agrega tu primer producto usando el formulario</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-value" id="totalProducts">0</div>
+              <div class="stat-label">Total Productos</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="totalValue">S/ 0.00</div>
+              <div class="stat-label">Valor Total</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="lowStock">0</div>
+              <div class="stat-label">Stock Bajo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <h2 id="formTitle">Agregar Producto</h2>
+          </div>
+          <form id="productForm">
+            <input type="hidden" id="productId">
+            
+            <div class="form-group">
+              <label for="name">Nombre del Producto</label>
+              <input type="text" id="name" required placeholder="Ej: Arroz Costeño">
+            </div>
+            
+            <div class="form-group">
+              <label for="description">Descripción</label>
+              <input type="text" id="description" placeholder="Descripción breve del producto">
+            </div>
+            
+            <div class="form-group">
+              <label for="price">Precio (S/)</label>
+              <input type="number" id="price" min="0" step="0.01" required placeholder="0.00">
+            </div>
+            
+            <div class="form-group">
+              <label for="stock">Stock</label>
+              <input type="number" id="stock" min="0" required placeholder="0">
+            </div>
+            
+            <div class="form-group">
+              <label for="category">Categoría</label>
+              <select id="category">
+                <option value="">Seleccionar categoría</option>
+                <option value="Abarrotes">Abarrotes</option>
+                <option value="Bebidas">Bebidas</option>
+                <option value="Lácteos">Lácteos</option>
+                <option value="Limpieza">Limpieza</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>Imagen del Producto</label>
+              <div class="img-upload">
+                <div id="imgPreview" class="img-preview">
+                  <i class="fas fa-image" style="font-size: 24px; color: #cbd5e1;"></i>
+                </div>
+                <div>
+                  <label for="image" class="file-label">
+                    <i class="fas fa-upload"></i> Seleccionar imagen
+                  </label>
+                  <input type="file" id="image" class="file-input" accept="image/*">
+                  <div class="file-info" id="fileInfo">Formatos: JPG, PNG (Max. 2MB)</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+              <button type="submit" class="btn-primary" style="flex: 1;">
+                <i class="fas fa-save"></i> Guardar Producto
+              </button>
+              <button type="button" id="resetForm" class="btn-outline">
+                <i class="fas fa-times"></i> Limpiar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Almacenamiento</h2>
+          </div>
+          <p style="margin-bottom: 16px; font-size: 14px;">
+            Los datos se guardan temporalmente en tu navegador. 
+            Cuando tengas tu base de datos SQL Server configurada, 
+            podrás exportar estos datos e importarlos allí.
+          </p>
+          <div style="display: flex; gap: 10px;">
+            <button id="backupBtn" class="btn-secondary" style="flex: 1;">
+              <i class="fas fa-download"></i> Respaldar Datos
+            </button>
+            <button id="restoreBtn" class="btn-outline" style="flex: 1;">
+              <i class="fas fa-upload"></i> Restaurar Datos
+            </button>
+          </div>
+          <input type="file" id="restoreFile" accept=".json" style="display: none;">
+          <div class="connection-status">
+            <span class="status-indicator status-connected" id="statusIndicator"></span>
+            <span id="statusText">Usando almacenamiento local</span>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- BOTÓN DE SINCRONIZACIÓN (AGREGAR ESTO) -->
+    <button id="syncBtn" class="btn-success" style="width: 100%; margin-top: 10px;">
+        <i class="fas fa-database"></i> Sincronizar con SQL Server
+    </button>
+    
+    <input type="file" id="restoreFile" accept=".json" style="display: none;">
+    <div class="connection-status">
+        <span class="status-indicator status-connected" id="statusIndicator"></span>
+        <span id="statusText">Usando almacenamiento local</span>
+    </div>
+</div>
+    <footer>
+      <p>Sistema de Gestión de Productos &copy; 2023 - Almacenamiento Local</p>
+    </footer>
+  </div>
+
+  <!-- Modal de confirmación -->
+  <div class="modal" id="confirmModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirmar acción</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modalMessage">¿Está seguro que desea eliminar este producto?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" id="modalCancel">Cancelar</button>
+        <button class="btn-danger" id="modalConfirm">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notificación -->
+  <div class="notification" id="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notificationText">Operación realizada con éxito</span>
+  </div>
+
+  <script>
+    // Variables globales
+    let products = [];
+    let editingId = null;
+    let currentImageId = null;
+       document.getElementById('syncBtn').addEventListener('click', syncDataToServer);
+
+    // Elementos DOM
+    const productsBody = document.getElementById('productsBody');
+    const emptyEl = document.getElementById('empty');
+    const totalBadge = document.getElementById('totalBadge');
+    const formTitle = document.getElementById('formTitle');
+    const notification = document.getElementById('notification');
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeEventListeners();
+      loadProducts();
+      updateStats();
+    });
+
+    // Inicializar event listeners
+    function initializeEventListeners() {
+      // Formulario de producto
+      document.getElementById('productForm').addEventListener('submit', handleFormSubmit);
+      document.getElementById('resetForm').addEventListener('click', resetForm);
+      
+      // Búsqueda y ordenamiento
+      document.getElementById('search').addEventListener('input', filterProducts);
+      document.getElementById('sort').addEventListener('change', filterProducts);
+      
+      // Botones de acción
+      document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+      document.getElementById('refreshBtn').addEventListener('click', loadProducts);
+      document.getElementById('backupBtn').addEventListener('click', backupData);
+      document.getElementById('restoreBtn').addEventListener('click', () => document.getElementById('restoreFile').click());
+      document.getElementById('restoreFile').addEventListener('change', restoreData);
+      
+      // Subida de imagen
+      document.getElementById('image').addEventListener('change', handleImageUpload);
+      
+      // Modal
+      document.querySelector('.close-modal').addEventListener('click', closeModal);
+      document.getElementById('modalCancel').addEventListener('click', closeModal);
+      document.getElementById('modalConfirm').addEventListener('click', confirmAction);
+    }
+
+    // Cargar productos desde localStorage
+    function loadProducts() {
+      try {
+        const storedProducts = localStorage.getItem('products');
+        if (storedProducts) {
+          products = JSON.parse(storedProducts);
+        } else {
+          // Datos de ejemplo si no hay productos guardados
+          products = [
+            { id: 1, name: 'Arroz Costeño', description: 'Arroz extra', price: 4.50, stock: 100, category: 'Abarrotes', imageId: null, createdAt: new Date() },
+            { id: 2, name: 'Aceite Primor', description: 'Aceite vegetal', price: 12.80, stock: 50, category: 'Abarrotes', imageId: null, createdAt: new Date() },
+            { id: 3, name: 'Leche Gloria', description: 'Leche evaporada', price: 3.20, stock: 30, category: 'Lácteos', imageId: null, createdAt: new Date() },
+            { id: 4, name: 'Coca Cola 1L', description: 'Gaseosa', price: 5.50, stock: 80, category: 'Bebidas', imageId: null, createdAt: new Date() }
+          ];
+          saveProducts();
+        }
+        
+        renderProducts();
+        updateStats();
+        showNotification('Productos cargados correctamente', 'success');
+      } catch (error) {
+        showNotification('Error al cargar productos: ' + error.message, 'error');
+      }
+    }
+
+    // Guardar productos en localStorage
+    function saveProducts() {
+      localStorage.setItem('products', JSON.stringify(products));
+    }
+
+    // Obtener imagen desde localStorage por ID
+    function getImageById(imageId) {
+      if (!imageId) return null;
+      return localStorage.getItem(`product_image_${imageId}`);
+    }
+
+    // Guardar imagen en localStorage
+    function saveImage(imageData) {
+      const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem(`product_image_${imageId}`, imageData);
+      return imageId;
+    }
+
+    // Eliminar imagen del localStorage
+    function removeImage(imageId) {
+      if (imageId) {
+        localStorage.removeItem(`product_image_${imageId}`);
+      }
+    }
+
+    // Guardar producto (crear o actualizar)
+    function saveProduct(product) {
+      try {
+        if (product.id) {
+          // Actualizar - eliminar imagen anterior si se está reemplazando
+          const index = products.findIndex(p => p.id === product.id);
+          if (index !== -1) {
+            const oldProduct = products[index];
+            if (oldProduct.imageId && oldProduct.imageId !== product.imageId) {
+              removeImage(oldProduct.imageId);
+            }
+            products[index] = product;
+          }
+        } else {
+          // Crear nuevo
+          product.id = Date.now();
+          product.createdAt = new Date();
+          products.unshift(product);
+        }
+        
+        saveProducts();
+        return true;
+      } catch (error) {
+        showNotification('Error al guardar producto: ' + error.message, 'error');
+        return false;
+      }
+    }
+
+    // Eliminar producto
+    function deleteProduct(id) {
+      try {
+        const product = products.find(p => p.id === id);
+        if (product && product.imageId) {
+          removeImage(product.imageId);
+        }
+        
+        products = products.filter(p => p.id !== id);
+        saveProducts();
+        return true;
+      } catch (error) {
+        showNotification('Error al eliminar producto: ' + error.message, 'error');
+        return false;
+      }
+    }
+
+    // Mostrar productos en la tabla
+    function renderProducts() {
+      const filteredProducts = filterProducts();
+      
+      if (filteredProducts.length === 0) {
+        emptyEl.style.display = 'block';
+        productsBody.innerHTML = '';
+        totalBadge.textContent = '0 productos';
+        return;
+      }
+      
+      emptyEl.style.display = 'none';
+      totalBadge.textContent = `${filteredProducts.length} producto${filteredProducts.length !== 1 ? 's' : ''}`;
+      
+      productsBody.innerHTML = filteredProducts.map(product => {
+        const imageData = getImageById(product.imageId);
+        return `
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              ${imageData 
+                ? `<img src="${imageData}" class="product-img" alt="${product.name}">` 
+                : `<div class="product-img" style="display: flex; align-items: center; justify-content: center; background: #f1f5f9;">
+                    <i class="fas fa-box" style="color: #94a3b8;"></i>
+                  </div>`
+              }
+              <div>
+                <div style="font-weight: 600;">${product.name}</div>
+                ${product.description ? `<div style="font-size: 13px; color: var(--secondary);">${product.description}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td class="text-right">S/ ${product.price.toFixed(2)}</td>
+          <td class="text-center">
+            <span class="badge ${product.stock > 50 ? 'badge-success' : product.stock > 10 ? 'badge-warning' : 'badge-danger'}">
+              ${product.stock} unidades
+            </span>
+          </td>
+          <td>${product.category || 'Sin categoría'}</td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn-outline btn-sm" onclick="editProduct(${product.id})">
+                <i class="fas fa-edit"></i> Editar
+              </button>
+              <button class="btn-danger btn-sm" onclick="showDeleteConfirm(${product.id})">
+                <i class="fas fa-trash"></i> Eliminar
+              </button>
+            </div>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    // Filtrar y ordenar productos
+    function filterProducts() {
+      const searchTerm = document.getElementById('search').value.toLowerCase();
+      const sortOption = document.getElementById('sort').value;
+      
+      let filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) ||
+        (product.description && product.description.toLowerCase().includes(searchTerm)) ||
+        (product.category && product.category.toLowerCase().includes(searchTerm))
+      );
+      
+      // Ordenar
+      switch(sortOption) {
+        case 'name':
+          filtered.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 'price-asc':
+          filtered.sort((a, b) => a.price - b.price);
+          break;
+        case 'price-desc':
+          filtered.sort((a, b) => b.price - a.price);
+          break;
+        case 'stock':
+          filtered.sort((a, b) => b.stock - a.stock);
+          break;
+        case 'new':
+        default:
+          filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          break;
+      }
+      
+      return filtered;
+    }
+
+    // Manejar envío del formulario
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      
+      const productId = document.getElementById('productId').value;
+      const name = document.getElementById('name').value;
+      const description = document.getElementById('description').value;
+      const price = parseFloat(document.getElementById('price').value);
+      const stock = parseInt(document.getElementById('stock').value);
+      const category = document.getElementById('category').value;
+      
+      const product = {
+        id: productId ? parseInt(productId) : null,
+        name,
+        description,
+        price,
+        stock,
+        category,
+        imageId: currentImageId
+      };
+      
+      if (saveProduct(product)) {
+        showNotification(
+          productId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente', 
+          'success'
+        );
+        resetForm();
+        loadProducts();
+      }
+    }
+
+    // Editar producto
+    function editProduct(id) {
+      const product = products.find(p => p.id === id);
+      if (!product) return;
+      
+      document.getElementById('productId').value = product.id;
+      document.getElementById('name').value = product.name;
+      document.getElementById('description').value = product.description || '';
+      document.getElementById('price').value = product.price;
+      document.getElementById('stock').value = product.stock;
+      document.getElementById('category').value = product.category || '';
+      
+      currentImageId = product.imageId;
+      const imgPreview = document.getElementById('imgPreview');
+      const imageData = getImageById(product.imageId);
+      if (imageData) {
+        imgPreview.innerHTML = `<img src="${imageData}" alt="Vista previa">`;
+      } else {
+        imgPreview.innerHTML = '<i class="fas fa-image" style="font-size: 24px; color: #cbd5e1;"></i>';
+      }
+      
+      formTitle.textContent = 'Editar Producto';
+      formTitle.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Resetear formulario
+    function resetForm() {
+      document.getElementById('productForm').reset();
+      document.getElementById('productId').value = '';
+      document.getElementById('imgPreview').innerHTML = '<i class="fas fa-image" style="font-size: 24px; color: #cbd5e1;"></i>';
+      formTitle.textContent = 'Agregar Producto';
+      currentImageId = null;
+    }
+
+    // Manejar subida de imagen
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      // Validar tipo de archivo
+      if (!file.type.match('image.*')) {
+        showNotification('Por favor, selecciona solo archivos de imagen', 'error');
+        return;
+      }
+      
+      // Validar tamaño (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        showNotification('La imagen no debe superar los 2MB', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        currentImageId = saveImage(event.target.result);
+        document.getElementById('imgPreview').innerHTML = `<img src="${event.target.result}" alt="Vista previa">`;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Mostrar confirmación de eliminación
+    function showDeleteConfirm(id) {
+      const modal = document.getElementById('confirmModal');
+      const product = products.find(p => p.id === id);
+      document.getElementById('modalMessage').textContent = 
+        `¿Está seguro que desea eliminar el producto "${product.name}"?`;
+      modal.style.display = 'flex';
+      
+      // Guardar el ID para usarlo en la confirmación
+      modal.dataset.productId = id;
+    }
+
+    // Confirmar acción (eliminación)
+    function confirmAction() {
+      const id = parseInt(document.getElementById('confirmModal').dataset.productId);
+      if (deleteProduct(id)) {
+        showNotification('Producto eliminado correctamente', 'success');
+        loadProducts();
+      }
+      closeModal();
+    }
+
+    // Cerrar modal
+    function closeModal() {
+      document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    // Actualizar estadísticas
+    function updateStats() {
+      const totalProducts = products.length;
+      const totalValue = products.reduce((sum, product) => sum + (product.price * product.stock), 0);
+      const lowStock = products.filter(product => product.stock < 20).length;
+      
+      document.getElementById('totalProducts').textContent = totalProducts;
+      document.getElementById('totalValue').textContent = `S/ ${totalValue.toFixed(2)}`;
+      document.getElementById('lowStock').textContent = lowStock;
+    }
+
+    // Exportar a CSV
+    function exportToCSV() {
+      const headers = ['Nombre', 'Descripción', 'Precio', 'Stock', 'Categoría'];
+      const csvData = [
+        headers.join(','),
+        ...products.map(p => [
+          `"${p.name}"`,
+          p.description ? `"${p.description}"` : '""',
+          p.price,
+          p.stock,
+          p.category || 'Sin categoría'
+        ].join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'productos.csv');
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showNotification('Datos exportados correctamente', 'success');
+    }
+
+    // Respaldar datos (sin incluir imágenes en el JSON)
+    function backupData() {
+      // Crear un objeto de respaldo sin las imágenes (solo referencias)
+      const backupData = {
+        products: products,
+        timestamp: new Date().toISOString(),
+        version: '1.1'
+      };
+      
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = 'respaldo-productos.json';
+      const linkElement = document.createElement('a');
+      
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      showNotification('Respaldo de datos creado correctamente', 'success');
+    }
+
+    // Restaurar datos
+    function restoreData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const restoredData = JSON.parse(event.target.result);
+          
+          if (restoredData.products && Array.isArray(restoredData.products)) {
+            if (confirm('¿Está seguro de restaurar los datos? Se reemplazarán todos los productos actuales.')) {
+              // Eliminar todas las imágenes actuales
+              products.forEach(product => {
+                if (product.imageId) {
+                  removeImage(product.imageId);
+                }
+              });
+              
+              // Restaurar productos (sin imágenes)
+              products = restoredData.products;
+              saveProducts();
+              loadProducts();
+              showNotification('Datos restaurados correctamente', 'success');
+            }
+          } else {
+            showNotification('El archivo no contiene datos válidos', 'error');
+          }
+        } catch (error) {
+          showNotification('Error al restaurar datos: ' + error.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+      
+      // Limpiar el input para permitir cargar el mismo archivo otra vez
+      e.target.value = '';
+    }
+
+// ==============================================
+// FUNCIONES PARA CONEXIÓN CON SQL SERVER
+// ==============================================
+
+// Función para probar la conexión con el servidor
+async function testConnection() {
+    try {
+        showNotification('Probando conexión con el servidor...', 'success');
+        
+        const response = await fetch('http://localhost:3000/api/test-connection');
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('✅ Conexión con el servidor establecida', 'success');
+            return true;
+        } else {
+            showNotification('❌ Error: ' + result.message, 'error');
+            return false;
+        }
+    } catch (error) {
+        showNotification('❌ No se puede conectar con el servidor: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// Función para sincronizar datos con SQL Server
+async function syncDataToServer() {
+    try {
+        // Mostrar mensaje de carga
+        showNotification('Iniciando sincronización con SQL Server...', 'success');
+        
+        // Obtener productos del localStorage
+        const productsToSync = JSON.parse(localStorage.getItem('products') || '[]');
+        
+        if (productsToSync.length === 0) {
+            showNotification('No hay productos para sincronizar', 'warning');
+            return;
+        }
+        
+        console.log('Enviando productos:', productsToSync);
+        
+        const response = await fetch('http://localhost:3000/api/sync-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ products: productsToSync })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            console.log('Sincronización exitosa:', result);
+            
+            // Actualizar estadísticas desde SQL Server
+            const statsResponse = await fetch('http://localhost:3000/api/stats');
+            const stats = await statsResponse.json();
+            
+            document.getElementById('totalProducts').textContent = stats.totalProducts;
+            document.getElementById('totalValue').textContent = `S/ ${stats.totalValue.toFixed(2)}`;
+            document.getElementById('lowStock').textContent = stats.lowStock;
+            
+        } else {
+            showNotification('Error: ' + result.message, 'error');
+            console.error('Error en sincronización:', result);
+        }
+    } catch (error) {
+        showNotification('Error de conexión: ' + error.message, 'error');
+        console.error('Error al sincronizar:', error);
+    }
+}
+
+// Función para cargar productos desde SQL Server
+async function loadProductsFromServer() {
+    try {
+        const response = await fetch('http://localhost:3000/api/products');
+        const serverProducts = await response.json();
+        
+        if (serverProducts.length > 0) {
+            // Combinar productos del servidor con locales
+            const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+            const allProducts = [...serverProducts, ...localProducts];
+            
+            // Eliminar duplicados
+            const uniqueProducts = allProducts.filter((product, index, self) =>
+                index === self.findIndex(p => p.id === product.id)
+            );
+            
+            products = uniqueProducts;
+            saveProducts();
+            renderProducts();
+            updateStats();
+            
+            showNotification('Productos cargados desde SQL Server', 'success');
+        }
+    } catch (error) {
+        console.error('Error cargando productos desde servidor:', error);
+    }
+}
+
+// Agregar botones de conexión y sincronización al HTML
+function addSyncButtons() {
+    const storageCard = document.querySelector('.card:last-child');
+    
+    if (!storageCard) return;
+    
+    // Eliminar botones existentes si ya están
+    const existingTestBtn = document.getElementById('testBtn');
+    const existingSyncBtn = document.getElementById('syncBtn');
+    const existingLoadBtn = document.getElementById('loadBtn');
+    
+    if (existingTestBtn) existingTestBtn.remove();
+    if (existingSyncBtn) existingSyncBtn.remove();
+    if (existingLoadBtn) existingLoadBtn.remove();
+    
+    // Botón de prueba de conexión
+    const testBtn = document.createElement('button');
+    testBtn.id = 'testBtn';
+    testBtn.className = 'btn-secondary';
+    testBtn.style.width = '100%';
+    testBtn.style.marginBottom = '10px';
+    testBtn.innerHTML = '<i class="fas fa-plug"></i> Probar Conexión SQL';
+    testBtn.onclick = testConnection;
+    
+    // Botón de sincronización
+    const syncButton = document.createElement('button');
+    syncButton.id = 'syncBtn';
+    syncButton.className = 'btn-success';
+    syncButton.style.width = '100%';
+    syncButton.style.marginBottom = '10px';
+    syncButton.innerHTML = '<i class="fas fa-database"></i> Sincronizar con SQL Server';
+    syncButton.onclick = syncDataToServer;
+    
+    // Botón para cargar desde servidor
+    const loadButton = document.createElement('button');
+    loadButton.id = 'loadBtn';
+    loadButton.className = 'btn-primary';
+    loadButton.style.width = '100%';
+    loadButton.style.marginBottom = '10px';
+    loadButton.innerHTML = '<i class="fas fa-download"></i> Cargar desde SQL Server';
+    loadButton.onclick = loadProductsFromServer;
+    
+    // Agregar botones antes del estado de conexión
+    const connectionStatus = storageCard.querySelector('.connection-status');
+    connectionStatus.parentNode.insertBefore(testBtn, connectionStatus);
+    connectionStatus.parentNode.insertBefore(syncButton, connectionStatus);
+    connectionStatus.parentNode.insertBefore(loadButton, connectionStatus);
+    
+    // Cambiar texto de estado
+    const statusText = document.getElementById('statusText');
+    if (statusText) {
+        statusText.textContent = 'Listo para conectar con SQL Server';
+    }
+}
+
+// Agregar los botones cuando la página cargue
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(addSyncButtons, 1000);
+});
+
+// También agregar los botones cuando se haga clic en el botón de actualizar
+document.getElementById('refreshBtn')?.addEventListener('click', function() {
+    setTimeout(addSyncButtons, 500);
+});
+
+    // Mostrar notificación
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      const icon = notification.querySelector('i');
+      const text = document.getElementById('notificationText');
+      
+      notification.className = `notification ${type}`;
+      text.textContent = message;
+      
+      if (type === 'success') {
+        icon.className = 'fas fa-check-circle';
+      } else {
+        icon.className = 'fas fa-exclamation-circle';
+      }
+      
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
